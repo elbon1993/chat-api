@@ -1,26 +1,34 @@
 package com.app.chat.controller;
 
+import com.app.chat.service.ChatMessageService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @Slf4j
 public class GroupChatController {
-    private final SimpMessagingTemplate messagingTemplate;
-    private final RedisTemplate redisTemplate;
+    @Autowired
+    ChatMessageService chatMessageService;
 
-    public GroupChatController(SimpMessagingTemplate messagingTemplate, RedisTemplate redisTemplate) {
-        this.messagingTemplate = messagingTemplate;
-        this.redisTemplate = redisTemplate;
+    @MessageMapping("/sendMessage/{roomId}")
+    @SendTo("/topic/{roomId}")
+    public ChatMessage sendMessage(@DestinationVariable String roomId, @Payload ChatMessage chatMessage) {
+        log.info("message recieved in server: " + chatMessage);
+        chatMessageService.saveChatMessage(chatMessage);
+        return chatMessage;
     }
 
-    @MessageMapping("/sendMessage")
-    public void sendMessage(ChatMessage chatMessage) {
-        log.info("message recieved in server: " + chatMessage);
-        messagingTemplate.convertAndSend("/topic/" + chatMessage.getRoomId(), chatMessage);
-//        redisTemplate.convertAndSend("/topic/" + chatMessage.getRoomId(), chatMessage);
+    @GetMapping("/getMessages/{roomId}")
+    public List<ChatMessage> getMessages(@PathVariable("roomId") String roomId) {
+        return chatMessageService.getChatMessages(roomId);
     }
 }

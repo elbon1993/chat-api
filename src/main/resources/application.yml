@@ -1,7 +1,5 @@
 spring:
-  application:
-    name: chat
   data:
     redis:
-      host: localhost
+      host: redis-stack
       port: 6379
