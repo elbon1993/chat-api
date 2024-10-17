@@ -1,5 +1,6 @@
 package com.app.chat.controller;
 
+import com.app.chat.model.MongoChatMessage;
 import com.app.chat.service.ChatMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,4 +32,11 @@ public class GroupChatController {
     public List<ChatMessage> getMessages(@PathVariable("roomId") String roomId) {
         return chatMessageService.getChatMessages(roomId);
     }
+
+    @GetMapping("/getMessagesMongo/{roomId}")
+    public List<MongoChatMessage> getMongoChatMessages(@PathVariable("roomId") String roomId) {
+        return chatMessageService.getMongoChatMessages(roomId);
+    }
+
+
 }

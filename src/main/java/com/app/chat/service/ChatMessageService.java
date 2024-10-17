@@ -1,6 +1,9 @@
 package com.app.chat.service;
 
 import com.app.chat.controller.ChatMessage;
+import com.app.chat.model.MongoChatMessage;
+import com.app.chat.repository.MongoChatRepository;
+import com.app.chat.util.CommonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +15,36 @@ import java.util.List;
 
 @Service
 public class ChatMessageService {
-    
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+
+    private final RedisTemplate<String, String> redisTemplate;
+
+    private final MongoChatRepository mongoChatRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Autowired
+    public ChatMessageService(MongoChatRepository mongoChatRepository, RedisTemplate<String, String> redisTemplate) {
+        this.mongoChatRepository = mongoChatRepository;
+        this.redisTemplate = redisTemplate;
+    }
+
     public void saveChatMessage(ChatMessage chatMessage) {
+        saveToRedis(chatMessage);
+        saveToMongo(chatMessage);
+    }
+
+    private void saveToMongo(ChatMessage chatMessage) {
+        MongoChatMessage mongoChatMessage = new MongoChatMessage(
+                null,
+                chatMessage.getContent(),
+                chatMessage.getSender(),
+                chatMessage.getRoomId(),
+                CommonUtil.getCurrentTimeStamp()
+        );
+        mongoChatRepository.save(mongoChatMessage);
+    }
+
+    private void saveToRedis(ChatMessage chatMessage) {
         try {
             String key = "chat:group:" + chatMessage.getRoomId();
             String jsonMessage = objectMapper.writeValueAsString(chatMessage);
@@ -43,5 +69,10 @@ public class ChatMessageService {
             }
         }
         return messages;
+    }
+
+
+    public List<MongoChatMessage> getMongoChatMessages(String roomId) {
+        return mongoChatRepository.findByRoomId(roomId);
     }
 }

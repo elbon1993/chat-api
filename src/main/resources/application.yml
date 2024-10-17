@@ -3,3 +3,5 @@ spring:
     redis:
       host: redis-stack
       port: 6379
+    mongodb:
+      uri: mongodb://mongo:27017/chatdb
